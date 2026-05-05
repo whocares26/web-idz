@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Вход{% endblock %}
+
+{% block body %}
+    <h1>Вход</h1>
+
+    {% if error %}
+        <div class="errors"><ul><li>{{ error.messageKey|trans(error.messageData, 'security') }}</li></ul></div>
+    {% endif %}
+
+    <div class="auth-form">
+        <form action="{{ path('app_login') }}" method="post">
+            <div>Имя пользователя:<br>
+                <input type="text" name="username" value="{{ last_username }}" autocomplete="username" required>
+            </div>
+            <div>Пароль:<br>
+                <input type="password" name="password" autocomplete="current-password" required>
+            </div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button type="submit">Войти</button>
+        </form>
+        <p>Нет аккаунта? <a href="{{ path('app_register') }}">Зарегистрироваться</a></p>
+    </div>
+{% endblock %}

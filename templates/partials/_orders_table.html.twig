@@ -1,0 +1,30 @@
+<table>
+    <tr>
+        <th>№</th><th>Имя</th><th>Фамилия</th><th>Телефон</th><th>Город</th><th>Адрес</th>
+        <th>Доставка</th><th>Оплата</th><th>Категория</th><th>Размер</th><th>Кол-во</th>
+        <th>Сумма</th><th>Дата</th>
+    </tr>
+    {% if orders is empty %}
+        <tr><td colspan="13" style="text-align:center">Заказов пока нет</td></tr>
+    {% else %}
+        {% for order in orders %}
+            {% for item in order.items %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.firstName }}</td>
+                    <td>{{ order.lastName }}</td>
+                    <td>{{ order.phone }}</td>
+                    <td>{{ order.city }}</td>
+                    <td>{{ order.address }}</td>
+                    <td>{{ order.delivery }}</td>
+                    <td>{{ order.payment }}</td>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.size }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ order.totalSum|number_format(0, '.', ' ') }} ₽</td>
+                    <td>{{ order.createdAt|date('Y-m-d H:i:s') }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+</table>

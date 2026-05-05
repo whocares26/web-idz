@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Магазин одежды{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('leaflet/leaflet.css') }}">
+    <style>#map { height: 350px; width: 100%; margin-top: 8px; border: 1px solid #000; }</style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    {% include 'partials/_nav.html.twig' %}
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="flash flash-{{ label }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <main>
+        {% block body %}{% endblock %}
+    </main>
+
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

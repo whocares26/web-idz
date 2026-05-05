@@ -1,0 +1,24 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Dto/'
+
+    # Tagged report generators — the ReportService receives them by tag.
+    App\Service\Report\ReportGeneratorInterface:
+        tags: ['app.report_generator']
+
+    App\Service\Report\ReportService:
+        arguments:
+            $generators: !tagged_iterator app.report_generator
+
+    App\Service\ProductCatalog: ~

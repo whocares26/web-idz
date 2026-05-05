@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Магазин — Оформление заказа{% endblock %}
+
+{% block body %}
+    <h1>Магазин — Оформление заказа</h1>
+
+    {% if not form.vars.valid and form.vars.submitted %}
+        <div class="errors">
+            <strong>Исправьте ошибки:</strong>
+            <ul>
+                {% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}
+                {% for child in form.children %}
+                    {% for error in child.vars.errors %}<li>{{ child.vars.label|default(child.vars.name) }}: {{ error.message }}</li>{% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% set sections = [
+        {title: 'Сумки',  items: bags},
+        {title: 'Одежда', items: clothing}
+    ] %}
+
+    {% for section in sections %}
+        <h2>{{ section.title }}</h2>
+        <div class="catalog-row">
+            {% for product in section.items %}
+                <div class="product-card" id="card-{{ product.id }}">
+                    <img src="{{ asset(product.image) }}" alt="{{ product.name }}">
+                    <div class="card-name">{{ product.name }}</div>
+                    <div class="card-price-rub">{{ product.priceRub|number_format(0, '.', ' ') }} ₽</div>
+                    <div class="card-price-foreign">${{ product.priceUsd|number_format(0, '.', ',') }} / €{{ product.priceEur|number_format(0, '.', ',') }}</div>
+                    <div class="card-controls">
+                        <label>Размер:</label>
+                        <select id="size-{{ product.id }}">
+                            {% for size in product.sizes %}<option value="{{ size }}">{{ size }}</option>{% endfor %}
+                        </select>
+                        <label>Количество:</label>
+                        <input type="number" id="qty-{{ product.id }}" value="1" min="1" max="99">
+                        <button type="button" class="btn-add-cart"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.priceRub }}">В корзину</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <div class="cart-summary">
+        <h3>Ваша корзина</h3>
+        <ul class="cart-items-list" id="cart-list">
+            <li><span class="cart-empty-msg">Корзина пуста — выберите товары выше</span></li>
+        </ul>
+        <div class="cart-total" id="cart-total" style="display:none">
+            Итого: <span id="cart-total-sum">0</span> ₽
+        </div>
+    </div>
+
+    <div class="order-form-section">
+        <h2>Оформление заказа</h2>
+        {{ form_start(form, {attr: {onsubmit: 'return injectCartItems()'}}) }}
+            {{ form_row(form.firstName) }}
+            {{ form_row(form.lastName) }}
+            {{ form_row(form.phone) }}
+            {{ form_row(form.city) }}
+            <div>
+                {{ form_label(form.address) }}
+                {{ form_widget(form.address, {attr: {id: 'address', placeholder: 'Кликните на карту или введите вручную'}}) }}
+                <div id="map"></div>
+                <small style="color:#555">Кликните на карту — адрес заполнится автоматически</small>
+            </div>
+            {{ form_row(form.delivery) }}
+            {{ form_row(form.payment) }}
+            {{ form_widget(form.totalSum, {attr: {id: 'total_sum'}}) }}
+            <div id="cart-items-collection"
+                 data-prototype="{{ form_widget(form.items.vars.prototype)|e('html_attr') }}"
+                 data-index="{{ form.items|length }}"
+                 style="display:none"></div>
+            <button type="submit">Оформить заказ</button>
+        {{ form_end(form) }}
+    </div>
+
+    <h2>Все заказы</h2>
+    {% include 'partials/_orders_table.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('leaflet/leaflet.js') }}"></script>
+    <script src="{{ asset('js/shop.js') }}"></script>
+{% endblock %}

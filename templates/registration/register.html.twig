@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block body %}
+    <h1>Регистрация</h1>
+
+    <div class="auth-form">
+        {{ form_start(form) }}
+            {{ form_row(form.username) }}
+            {{ form_row(form.email) }}
+            {{ form_row(form.plainPassword.first) }}
+            {{ form_row(form.plainPassword.second) }}
+            <button type="submit">Зарегистрироваться</button>
+        {{ form_end(form) }}
+        <p>Уже есть аккаунт? <a href="{{ path('app_login') }}">Войти</a></p>
+    </div>
+{% endblock %}

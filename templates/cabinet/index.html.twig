@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block body %}
+    <h1>Личный кабинет</h1>
+
+    <div class="cabinet-info">
+        <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Роль:</strong> {{ user.isAdmin ? 'Администратор' : 'Пользователь' }}</p>
+        <p><strong>Дата регистрации:</strong> {{ user.createdAt|date('d.m.Y H:i') }}</p>
+    </div>
+
+    <h2>Мои заказы</h2>
+    {% include 'partials/_report_buttons.html.twig' %}
+
+    {% if orders is empty %}
+        <p>У вас пока нет заказов. <a href="{{ path('app_home') }}">Перейти в магазин</a></p>
+    {% else %}
+        <table>
+            <tr>
+                <th>№</th><th>Дата</th><th>Город</th><th>Адрес</th>
+                <th>Доставка</th><th>Оплата</th><th>Товары</th><th>Сумма</th>
+            </tr>
+            {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.createdAt|date('d.m.Y H:i') }}</td>
+                    <td>{{ order.city }}</td>
+                    <td>{{ order.address }}</td>
+                    <td>{{ order.delivery }}</td>
+                    <td>{{ order.payment }}</td>
+                    <td>
+                        {% for item in order.items %}
+                            {{ item.category }} ({{ item.size }}, {{ item.quantity }} шт.)<br>
+                        {% endfor %}
+                    </td>
+                    <td>{{ order.totalSum|number_format(0, '.', ' ') }} ₽</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+<nav class="main-nav">
+    {% if app.user %}
+        <span>👤 {{ app.user.userIdentifier }}{% if app.user.isAdmin %} (Администратор){% endif %}</span>
+        <a href="{{ path('app_cabinet') }}">Личный кабинет</a>
+        <a href="{{ path('app_home') }}">Магазин</a>
+        <a href="{{ path('app_logout') }}">Выйти</a>
+    {% else %}
+        <a href="{{ path('app_login') }}">Войти</a>
+        <a href="{{ path('app_register') }}">Регистрация</a>
+    {% endif %}
+</nav>
