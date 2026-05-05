@@ -77,7 +77,7 @@
             <div id="cart-items-collection"
                  data-prototype="{{ form_widget(form.items.vars.prototype)|e('html_attr') }}"
                  data-index="{{ form.items|length }}"
-                 style="display:none"></div>
+                 style="display:none">{{ form_widget(form.items) }}</div>
             <button type="submit">Оформить заказ</button>
         {{ form_end(form) }}
     </div>

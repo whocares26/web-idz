@@ -14,8 +14,9 @@ services:
             - '../src/Dto/'
 
     # Tagged report generators — the ReportService receives them by tag.
-    App\Service\Report\ReportGeneratorInterface:
-        tags: ['app.report_generator']
+    _instanceof:
+        App\Service\Report\ReportGeneratorInterface:
+            tags: ['app.report_generator']
 
     App\Service\Report\ReportService:
         arguments:

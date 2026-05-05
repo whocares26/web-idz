@@ -2,29 +2,41 @@
 (function () {
     'use strict';
 
+    function findInput(id, name) {
+        return document.getElementById(id) || document.querySelector('[name="' + name + '"]');
+    }
+    var addressInput = findInput('address', 'order_form[address]');
+    var totalSumInput = findInput('total_sum', 'order_form[totalSum]');
+
     // ---------- Map ----------
-    var map = L.map('map', { attributionControl: false }).setView([52.6088, 39.5994], 12);
-    L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    var marker = null;
-    map.on('click', function (e) {
-        var lat = e.latlng.lat;
-        var lng = e.latlng.lng;
-        if (marker) { marker.setLatLng(e.latlng); } else { marker = L.marker(e.latlng).addTo(map); }
-        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=ru')
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                var addr = '';
-                var a = data.address || {};
-                if (a.road) addr += a.road;
-                if (a.house_number) addr += ', ' + a.house_number;
-                if (a.city || a.town || a.village) addr += ', ' + (a.city || a.town || a.village);
-                document.getElementById('address').value = addr || data.display_name;
-                marker.bindPopup(addr || data.display_name).openPopup();
-            })
-            .catch(function () {
-                document.getElementById('address').value = lat.toFixed(5) + ', ' + lng.toFixed(5);
-            });
-    });
+    var mapEl = document.getElementById('map');
+    if (mapEl && typeof L !== 'undefined') {
+        var map = L.map('map', { attributionControl: false }).setView([52.6088, 39.5994], 12);
+        L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        var marker = null;
+        map.on('click', function (e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            if (marker) { marker.setLatLng(e.latlng); } else { marker = L.marker(e.latlng).addTo(map); }
+            var coords = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            if (addressInput) addressInput.value = coords;
+            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=ru')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var addr = '';
+                    var a = data.address || {};
+                    if (a.road) addr += a.road;
+                    if (a.house_number) addr += ', ' + a.house_number;
+                    if (a.city || a.town || a.village) addr += ', ' + (a.city || a.town || a.village);
+                    var resolved = addr || data.display_name || coords;
+                    if (addressInput) addressInput.value = resolved;
+                    marker.bindPopup(resolved).openPopup();
+                })
+                .catch(function () {
+                    if (marker) marker.bindPopup(coords).openPopup();
+                });
+        });
+    }
 
     // ---------- Cart ----------
     var cart = [];
@@ -134,7 +146,7 @@
             collection.appendChild(wrap);
             index += 1;
         });
-        document.getElementById('total_sum').value = totalSum;
+        if (totalSumInput) totalSumInput.value = totalSum;
         return true;
     };
 })();
