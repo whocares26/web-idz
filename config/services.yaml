@@ -22,3 +22,6 @@ services:
             $generators: !tagged_iterator app.report_generator
 
     App\Service\ProductCatalog: ~
+
+    Symfony\Component\Security\Http\Authenticator\FormLoginAuthenticator:
+        alias: security.authenticator.form_login.main
