@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Report;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -31,7 +32,7 @@ final readonly class ExcelReportGenerator implements ReportGeneratorInterface
         foreach ($headers as $i => $header) {
             $cell = [$i + 1, 1];
             $sheet->setCellValue($cell, $header);
-            $style = $sheet->getStyleByColumnAndRow($i + 1, 1);
+            $style = $sheet->getStyle($cell);
             $style->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
             $style->getFill()
                 ->setFillType(Fill::FILL_SOLID)
@@ -41,13 +42,13 @@ final readonly class ExcelReportGenerator implements ReportGeneratorInterface
         $rowIndex = 2;
         foreach ($this->formatter->rows($orders) as $row) {
             foreach ($row as $colIndex => $value) {
-                $sheet->setCellValueByColumnAndRow($colIndex + 1, $rowIndex, $value);
+                $sheet->setCellValue([$colIndex + 1, $rowIndex], $value);
             }
             ++$rowIndex;
         }
 
         foreach (range(1, count($headers)) as $columnIndex) {
-            $sheet->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($columnIndex))->setAutoSize(true);
         }
 
         $writer = new Xlsx($spreadsheet);

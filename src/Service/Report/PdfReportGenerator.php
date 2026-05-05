@@ -43,10 +43,13 @@ final readonly class PdfReportGenerator implements ReportGeneratorInterface
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFont('Arial', '', 6.5);
 
+        $rowHeight = 0.0;
+        foreach ($rows as $row) {
+            $rowHeight = max($rowHeight, $this->measureRowHeight($pdf, $row));
+        }
+
         $alternate = false;
         foreach ($rows as $row) {
-            $rowHeight = $this->measureRowHeight($pdf, $row);
-
             if ($pdf->GetY() + $rowHeight > $pdf->GetPageHeight() - 10) {
                 $pdf->AddPage();
                 $this->renderHeader($pdf);
@@ -54,7 +57,7 @@ final readonly class PdfReportGenerator implements ReportGeneratorInterface
                 $pdf->SetFont('Arial', '', 6.5);
             }
 
-            $this->renderRow($pdf, $row, $alternate);
+            $this->renderRow($pdf, $row, $alternate, $rowHeight);
             $alternate = !$alternate;
         }
 
@@ -118,18 +121,19 @@ final readonly class PdfReportGenerator implements ReportGeneratorInterface
     /**
      * @param list<string|int> $row
      */
-    private function renderRow(Fpdf $pdf, array $row, bool $alternate): void
+    private function renderRow(Fpdf $pdf, array $row, bool $alternate, float $rowHeight): void
     {
-        $rowHeight = $this->measureRowHeight($pdf, $row);
         $color = $alternate ? [245, 245, 245] : [255, 255, 255];
+        $pdf->SetFillColor($color[0], $color[1], $color[2]);
 
         $x = $pdf->GetX();
         $y = $pdf->GetY();
 
         foreach ($row as $i => $value) {
             $text = $this->transliterator->transliterate((string) $value);
-            $pdf->SetFillColor($color[0], $color[1], $color[2]);
-            $pdf->MultiCell(self::COL_WIDTHS[$i], self::LINE_HEIGHT, $text, 1, 'L', true);
+            $pdf->Rect($x, $y, self::COL_WIDTHS[$i], $rowHeight, 'DF');
+            $pdf->SetXY($x, $y + 1);
+            $pdf->MultiCell(self::COL_WIDTHS[$i], self::LINE_HEIGHT, $text, 0, 'L', false);
             $x += self::COL_WIDTHS[$i];
             $pdf->SetXY($x, $y);
         }
