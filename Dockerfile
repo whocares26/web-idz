@@ -42,9 +42,24 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_HTTP_TIMEOUT=600 \
+    COMPOSER_PROCESS_TIMEOUT=600 \
+    COMPOSER_NO_INTERACTION=1
+
 COPY . /var/www/html
 
-RUN mkdir -p var/cache var/log \ 
-    && chown -R www-data:www-data var
+RUN mkdir -p var/cache var/log vendor \
+    && chown -R www-data:www-data var vendor
+
+# Entrypoint installs composer deps on first start (when vendor volume is empty)
+# and then hands off to apache. This avoids packagist network flakiness during
+# `docker build` and lets the install be retried with `docker compose restart`.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
 
 EXPOSE 80
