@@ -182,7 +182,6 @@ vendor\bin\phpstan analyse
 - `Service\ProductCatalog` — фильтрация по категории, кэширование.
 - `Service\OrderManager` — построение заказа из DTO, разделение видимости
   для admin/user.
-- `Service\Report\Transliterator` — корректная транслитерация.
 - `Service\Report\OrderRowFormatter` — расплющивание заказов в строки.
 - `Service\Report\CsvReportGenerator` — UTF-8 BOM, корректные заголовки.
 - `Service\Report\ReportService` — диспатч по формату, 404 на неизвестном.
