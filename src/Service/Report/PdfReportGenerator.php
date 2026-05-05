@@ -4,23 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service\Report;
 
-use Fpdf\Fpdf;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 use Symfony\Component\HttpFoundation\Response;
 
 final readonly class PdfReportGenerator implements ReportGeneratorInterface
 {
-    /** @var list<int> */
-    private const COL_WIDTHS = [7, 25, 22, 14, 42, 18, 36, 40, 10, 8, 20, 24];
-    /** @var list<string> */
-    private const HEADERS_LATIN = [
-        'No', 'Name', 'Phone', 'City', 'Address', 'Delivery',
-        'Payment', 'Item', 'Size', 'Qty', 'Sum (RUB)', 'Date',
-    ];
-    private const LINE_HEIGHT = 4.5;
-
     public function __construct(
         private OrderRowFormatter $formatter,
-        private Transliterator $transliterator,
     ) {
     }
 
@@ -31,37 +22,22 @@ final readonly class PdfReportGenerator implements ReportGeneratorInterface
 
     public function generate(iterable $orders): Response
     {
+        $headers = $this->formatter->headers();
         $rows = $this->formatter->rows($orders);
 
-        $pdf = new Fpdf('L', 'mm', 'A4');
-        $pdf->SetMargins(8, 8, 8);
-        $pdf->AddPage();
-
-        $this->renderTitle($pdf);
-        $this->renderHeader($pdf);
-
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('Arial', '', 6.5);
-
-        $rowHeight = 0.0;
-        foreach ($rows as $row) {
-            $rowHeight = max($rowHeight, $this->measureRowHeight($pdf, $row));
-        }
-
-        $alternate = false;
-        foreach ($rows as $row) {
-            if ($pdf->GetY() + $rowHeight > $pdf->GetPageHeight() - 10) {
-                $pdf->AddPage();
-                $this->renderHeader($pdf);
-                $pdf->SetTextColor(0, 0, 0);
-                $pdf->SetFont('Arial', '', 6.5);
-            }
-
-            $this->renderRow($pdf, $row, $alternate, $rowHeight);
-            $alternate = !$alternate;
-        }
-
-        $body = $pdf->Output('S');
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'default_font' => 'dejavusans',
+            'default_font_size' => 7,
+            'margin_left' => 8,
+            'margin_right' => 8,
+            'margin_top' => 8,
+            'margin_bottom' => 8,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+        $mpdf->WriteHTML($this->buildHtml($headers, $rows));
+        $body = $mpdf->Output('', Destination::STRING_RETURN);
 
         $response = new Response($body);
         $response->headers->set('Content-Type', 'application/pdf');
@@ -71,72 +47,42 @@ final readonly class PdfReportGenerator implements ReportGeneratorInterface
         return $response;
     }
 
-    private function renderTitle(Fpdf $pdf): void
-    {
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->SetFillColor(0, 0, 0);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 10, 'Orders Report', 1, 1, 'C', true);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Ln(3);
-    }
-
-    private function renderHeader(Fpdf $pdf): void
-    {
-        $pdf->SetFillColor(50, 50, 50);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('Arial', 'B', 7);
-        foreach (self::HEADERS_LATIN as $i => $header) {
-            $pdf->Cell(self::COL_WIDTHS[$i], 7, $header, 1, 0, 'C', true);
-        }
-        $pdf->Ln();
-    }
-
     /**
-     * @param list<string|int> $row
+     * @param list<string> $headers
+     * @param list<list<string|int>> $rows
      */
-    private function measureRowHeight(Fpdf $pdf, array $row): float
+    private function buildHtml(array $headers, array $rows): string
     {
-        $maxLines = 1;
-        foreach ($row as $i => $value) {
-            $text = $this->transliterator->transliterate((string) $value);
-            $words = explode(' ', $text);
-            $lines = 1;
-            $current = '';
-            foreach ($words as $word) {
-                $candidate = $current === '' ? $word : $current.' '.$word;
-                if ($pdf->GetStringWidth($candidate) > self::COL_WIDTHS[$i] - 2) {
-                    ++$lines;
-                    $current = $word;
-                } else {
-                    $current = $candidate;
-                }
+        $css = <<<'CSS'
+<style>
+    body { font-family: dejavusans; font-size: 7pt; }
+    h1 { background: #000; color: #fff; padding: 8pt; text-align: center; font-size: 12pt; margin: 0 0 6pt; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #000; padding: 2pt 3pt; vertical-align: top; }
+    th { background: #333; color: #fff; text-align: center; }
+    tr.alt td { background: #f5f5f5; }
+</style>
+CSS;
+
+        $thead = '<tr>';
+        foreach ($headers as $header) {
+            $thead .= '<th>'.htmlspecialchars($header, ENT_QUOTES, 'UTF-8').'</th>';
+        }
+        $thead .= '</tr>';
+
+        $tbody = '';
+        $alt = false;
+        foreach ($rows as $row) {
+            $tbody .= '<tr'.($alt ? ' class="alt"' : '').'>';
+            foreach ($row as $cell) {
+                $tbody .= '<td>'.htmlspecialchars((string) $cell, ENT_QUOTES, 'UTF-8').'</td>';
             }
-            $maxLines = max($maxLines, $lines);
+            $tbody .= '</tr>';
+            $alt = !$alt;
         }
 
-        return $maxLines * self::LINE_HEIGHT + 2;
-    }
-
-    /**
-     * @param list<string|int> $row
-     */
-    private function renderRow(Fpdf $pdf, array $row, bool $alternate, float $rowHeight): void
-    {
-        $color = $alternate ? [245, 245, 245] : [255, 255, 255];
-        $pdf->SetFillColor($color[0], $color[1], $color[2]);
-
-        $x = $pdf->GetX();
-        $y = $pdf->GetY();
-
-        foreach ($row as $i => $value) {
-            $text = $this->transliterator->transliterate((string) $value);
-            $pdf->Rect($x, $y, self::COL_WIDTHS[$i], $rowHeight, 'DF');
-            $pdf->SetXY($x, $y + 1);
-            $pdf->MultiCell(self::COL_WIDTHS[$i], self::LINE_HEIGHT, $text, 0, 'L', false);
-            $x += self::COL_WIDTHS[$i];
-            $pdf->SetXY($x, $y);
-        }
-        $pdf->SetXY(8, $y + $rowHeight);
+        return $css
+            .'<h1>Отчёт по заказам</h1>'
+            .'<table><thead>'.$thead.'</thead><tbody>'.$tbody.'</tbody></table>';
     }
 }
