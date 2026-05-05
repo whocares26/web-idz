@@ -42,14 +42,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Install dependencies first to leverage Docker layer cache.
-COPY composer.json composer.lock* symfony.lock* /var/www/html/
-RUN composer install --no-scripts --no-interaction --prefer-dist --no-autoloader || true
-
 COPY . /var/www/html
 
-RUN composer dump-autoload --optimize \
-    && mkdir -p var/cache var/log \
+RUN mkdir -p var/cache var/log \ 
     && chown -R www-data:www-data var
 
 EXPOSE 80
