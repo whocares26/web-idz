@@ -96,5 +96,14 @@
             "allow-contrib": false,
             "require": "7.0.*"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        },
+        {
+            "packagist.org": false
+        }
+    ]
 }
