@@ -10,7 +10,7 @@ if [ ! -f vendor/autoload_runtime.php ]; then
     composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/
     echo "[entrypoint] vendor/ is empty, running composer install..."
     for attempt in 1 2 3; do
-        if composer install --prefer-dist --no-progress; then
+        if composer install --prefer-dist --no-progress --no-scripts; then
             break
         fi
         echo "[entrypoint] composer install failed (attempt ${attempt}/3), retrying in 10s..."
