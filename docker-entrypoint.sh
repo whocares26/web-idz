@@ -6,6 +6,8 @@ cd /var/www/html
 git config --global --add safe.directory /var/www/html || true
 
 if [ ! -f vendor/autoload_runtime.php ]; then
+    echo "[entrypoint] configuring composer mirror (aliyun)..."
+    composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/
     echo "[entrypoint] vendor/ is empty, running composer install..."
     for attempt in 1 2 3; do
         if composer install --prefer-dist --no-progress; then
